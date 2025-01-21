@@ -1,5 +1,6 @@
 
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -7,11 +8,11 @@ const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = 3000;
-const SECRET_KEY = process.env.secret;
-const connectMongo = process.env.mongo_connection;
+const SECRET_KEY = process.env.secret || "secret_key";
+const connectMongo = process.env.mongo_connection || "mongodb://localhost:27017/mean_crud";
 app.use(express.json());
 app.use(cors());
-
+app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB connection
 mongoose.connect(connectMongo, {
     useNewUrlParser: true,
@@ -54,8 +55,9 @@ app.post('/api/register', async (req, res) => {
 
 // Middleware to verify JWT
 function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'];
+    let token = req.headers['authorization'];
     if (!token) return res.sendStatus(401);
+    token = token.split(' ')[1];
     jwt.verify(token, SECRET_KEY, (err, user) => {
         if (err) return res.sendStatus(403);
         req.user = user;
@@ -72,17 +74,31 @@ app.get('/api/companies', authenticateToken, async (req, res) => {
 app.post('/api/companies', authenticateToken, async (req, res) => {
     const company = new Company(req.body);
     await company.save();
-    res.sendStatus(201);
+    res.status(201).json({
+        created: "Ok"
+    });
 });
 
 app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     await Company.findByIdAndUpdate(req.params.id, req.body);
-    res.sendStatus(200);
+    res.status(200).json({
+        update: "Ok"
+    });
 });
 
 app.delete('/api/companies/:id', authenticateToken, async (req, res) => {
     await Company.findByIdAndDelete(req.params.id);
-    res.sendStatus(200);
+    res.status(200).json({
+        deleted: "Ok"
+    });
+});
+
+
+app.get('*', (req, res, next) => {
+    if (!req.path.startsWith('/api'))
+        res.sendFile(path.join(__dirname, 'public/index.html'));
+    else
+        next();
 });
 
 // Start server
