@@ -12,7 +12,6 @@ const SECRET_KEY = process.env.secret || "secret_key";
 const connectMongo = process.env.mongo_connection || "mongodb://localhost:27017/mean_crud";
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB connection
 mongoose.connect(connectMongo, {
     useNewUrlParser: true,
@@ -32,7 +31,11 @@ const CompanySchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 const Company = mongoose.model('Company', CompanySchema);
-
+app.get('/', async (req, res) => {
+    res.status(200).json({
+        ping: "Pong"
+    })
+})
 // Routes
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -50,7 +53,9 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
     const user = new User({ username, password: hashedPassword });
     await user.save();
-    res.sendStatus(201);
+    res.status(201).json({
+        status: "created"
+    });
 });
 
 // Middleware to verify JWT
@@ -91,14 +96,6 @@ app.delete('/api/companies/:id', authenticateToken, async (req, res) => {
     res.status(200).json({
         deleted: "Ok"
     });
-});
-
-
-app.get('*', (req, res, next) => {
-    if (!req.path.startsWith('/api'))
-        res.sendFile(path.join(__dirname, 'public/index.html'));
-    else
-        next();
 });
 
 // Start server
