@@ -8,8 +8,8 @@ const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = 3000;
-const SECRET_KEY = process.env.secret || "secret_key";
-const connectMongo = process.env.mongo_connection || "mongodb://localhost:27017/mean_crud";
+const SECRET_KEY = process.env.SECRET || "secret_key";
+const connectMongo = `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@${process.env.HOST}/${process.env.DATABASE}`
 app.use(express.json());
 app.use(cors());
 // MongoDB connection
